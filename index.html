@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Chat</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        #chat-window {
+            width: 80%;
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            overflow-y: scroll;
+            max-height: 400px;
+        }
+
+        #console-input {
+            width: 80%;
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-window"></div>
+    <input id="console-input" type="text" placeholder="Type your message...">
+    <script src="test.js"></script>
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const consoleInput = document.getElementById('console-input');
+        
+        // Function to add a message to the chat window
+        function addMessage(message) {
+            const newMessage = document.createElement('p');
+            newMessage.textContent = message;
+            chatWindow.appendChild(newMessage);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to the bottom
+        }
+
+        // Event listener for bot messages
+        bot.on('message', (message) => {
+            console.log(message.toAnsi()); // Log to the console
+            addMessage(message.toAnsi()); // Add to the chat window
+        });
+
+        // Event listener for user input
+        consoleInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const userInput = consoleInput.value;
+                bot.chat(userInput); // Send the user's message to the bot
+                consoleInput.value = ''; // Clear the input field
+            }
+        });
+
+        const ws = new WebSocket('ws://localhost:3000');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'chat') {
+                addMessage(data.message);
+            }
+        };
+
+        function addMessage(message) {
+            const chatWindow = document.getElementById('chat-window');
+            const newMessage = document.createElement('p');
+            newMessage.textContent = message;
+            chatWindow.appendChild(newMessage);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to the bottom
+        }
+    </script>
+</body>
+</html>
