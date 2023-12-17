@@ -67,6 +67,11 @@ const argv = yargs
     describe: 'Server port',
     type: 'number',
   })
+  .option('owner', {
+    alias: 'o',
+    describe: 'Bot owner',
+    type: 'string',
+  })
   .argv;
 
 const bot = mineflayer.createBot({
@@ -377,15 +382,15 @@ bot.on('chat', (username, message) => {
         }
     }
 
-    if (username === 'SmellOfBebra') {
+    if (username === `${(argv.owner)}`) {
         const mcData = require('minecraft-data')(bot.version)
         const args = message.split(' ')
-        if (args[0] == 'Собери') {
+        if (args[0] == 'Collect') {
 
             // Get the correct block type
             const blockType = mcData.blocksByName[args[1]]
             if (!blockType) {
-                bot.chat("Не знаю такого блока")
+                bot.chat("I don't know such a block")
                 return
             }
 
@@ -396,11 +401,11 @@ bot.on('chat', (username, message) => {
             })
 
             if (!block) {
-                bot.chat("Не вижу таких поблизости")
+                bot.chat("I don't see any around here")
                 return
             }
 
-            bot.chat('Собираю ближний ' + blockType.name)
+            bot.chat('Looting a short-range ' + blockType.name)
 
             // Collect the block if we found one
             bot.collectBlock.collect(block, err => {
@@ -408,28 +413,28 @@ bot.on('chat', (username, message) => {
             })
         }
 
-        if (message === 'охраняй') {
+        if (message === 'Guard') {
             const player = bot.players[username]
 
             if (!player) {
-                bot.chat("Не могу тебя найти")
+                bot.chat("Can't find you.")
                 return
             }
 
-            bot.chat('Бля пизда всем нахуй бляяяя')
+            bot.chat('Got you')
             guardArea(player.entity.position)
         }
 
-        if (message.indexOf('пиши ') !== -1) {
-            var replacement = "пиши ",
+        if (message.indexOf('say ') !== -1) {
+            var replacement = "say ",
                 toReplace = "",
                 str = message
 
             str = str.replace(replacement, toReplace)
             bot.chat(str)
         }
-        if (message.indexOf('ходи ') !== -1) {
-            var replacement = "ходи ",
+        if (message.indexOf('Follow ') !== -1) {
+            var replacement = "Follow ",
                 toReplace = "",
                 str = message
 
@@ -437,7 +442,7 @@ bot.on('chat', (username, message) => {
             const player = bot.players[str]
 
             if (!player) {
-                bot.chat("Не могу найти")
+                bot.chat("Can't find you")
                 return
             }
 
@@ -445,8 +450,8 @@ bot.on('chat', (username, message) => {
             bot.pathfinder.setGoal(goal, true)
         }
 
-        if (message.indexOf('дерись ') !== -1) {
-            var replacement = "дерись ",
+        if (message.indexOf('Fight ') !== -1) {
+            var replacement = "Fight ",
                 toReplace = "",
                 str = message
 
@@ -454,19 +459,19 @@ bot.on('chat', (username, message) => {
             const player = bot.players[str]
 
             if (!player) {
-                bot.chat("Бля а где нахуй?")
+                bot.chat("Can't find him")
                 return
             }
 
-            bot.chat('Ща отпизжу')
+            bot.chat('Roger that')
             bot.pvp.attack(player.entity)
         }
 
-        if (message === 'стоп') {
+        if (message === 'stop') {
             bot.chat('ok')
             stopGuarding()
         }
-        if (message === 'выкинь') {
+        if (message === 'Drop') {
             function tossNext() {
                 if (bot.inventory.items().length === 0)
                     return
