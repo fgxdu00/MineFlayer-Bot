@@ -1,4 +1,5 @@
 const mineflayer = require('mineflayer')
+const yargs = require('yargs');
 const pvp = require('mineflayer-pvp').plugin
 const {
     pathfinder,
@@ -9,9 +10,7 @@ const GoalFollow = goals.GoalFollow
 const armorManager = require('mineflayer-armor-manager')
 const autoeat = require('mineflayer-auto-eat').plugin
 const collectBlock = require('mineflayer-collectblock').plugin
-const {
-    mineflayer: mineflayerViewer
-} = require('prismarine-viewer')
+const mineflayerViewer = require('prismarine-viewer').mineflayer
 const {
     GoalBlock
 } = require('mineflayer-pathfinder').goals
@@ -31,7 +30,7 @@ optimization: {
         })
     ]
 }
-var radarPlugin = require('mineflayer-radar')(mineflayer);
+const radarPlugin = require('mineflayer-radar')(mineflayer);
 var options = {
     host: '0.0.0.0', // optional
     port: 3008, // optional
@@ -52,18 +51,31 @@ const wss = new WebSocket.Server({
     server
 });
 
+const argv = yargs
+  .option('username', {
+    alias: 'u',
+    describe: 'Bot username',
+    type: 'string',
+  })
+  .option('ip', {
+    alias: 'i',
+    describe: 'Server IP address',
+    type: 'string',
+  })
+  .option('port', {
+    alias: 'p',
+    describe: 'Server port',
+    type: 'number',
+  })
+  .argv;
 
 const bot = mineflayer.createBot({
-    host: 'bergplay.ru',
-    port: 25565,
-    username: 'Coppr_Spider777',
-})
+  host: argv.ip || 'localhost',
+  port: argv.port || 25565,
+  username: argv.username || 'Bot',
+});
 
-// const bot = mineflayer.createBot({
-//   host: 'sosunok.aternos.me',
-//   port: 47801,
-//   username: 'Coppr_Spider777',
-// })
+radarPlugin(bot, options);
 
 // Serve the HTML file
 app.use(express.static('public'));
@@ -95,7 +107,7 @@ bot.on('login', () => {
     console.log('Bot logged in');
 });
 
-radarPlugin(bot, options);
+
 
 bot.loadPlugin(autototem)
 bot.loadPlugin(pvp)
@@ -197,7 +209,7 @@ function useInvsee(username, showEquipment, message) {
             bot.chat(`${username} has no ${what}`)
         }
     })
-    if (message === 'invsee Coppr_Spider777') {
+    if (message === `invsee ${bot.username}`) {
         console.log('не понятно крч чо там')
     } else {
         if (showEquipment) {
