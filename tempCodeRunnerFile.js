@@ -1,1 +1,0 @@
-var autoTotem = require('mineflayer-auto-totem')

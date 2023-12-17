@@ -41,6 +41,18 @@ const {
     autototem
 } = require('mineflayer-auto-totem')
 
+
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({
+    server
+});
+
+
 const bot = mineflayer.createBot({
     host: 'bergplay.ru',
     port: 25565,
@@ -52,6 +64,36 @@ const bot = mineflayer.createBot({
 //   port: 47801,
 //   username: 'Coppr_Spider777',
 // })
+
+// Serve the HTML file
+app.use(express.static('public'));
+
+// WebSocket connection handling
+wss.on('connection', (ws) => {
+    // Forward bot messages to the client
+    bot.on('message', (message) => {
+        ws.send(JSON.stringify({
+            type: 'chat',
+            message: message.toAnsi()
+        }));
+    });
+
+    // Handle incoming messages from the client (if needed)
+    ws.on('message', (message) => {
+        // Handle client messages if necessary
+    });
+});
+
+// Start the server
+const PORT = process.env.PORT || 5500;
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// Handle bot events or commands here
+bot.on('login', () => {
+    console.log('Bot logged in');
+});
 
 radarPlugin(bot, options);
 
@@ -77,8 +119,11 @@ const rl = readline.createInterface({
 rl.on('line', (input) => {
     // Пример: присвоить введенное значение переменной
     let userInput = input;
-
-    bot.chat(userInput);
+    if (userInput === "playerList") {
+        displayPlayerList()
+    } else {
+        bot.chat(userInput);
+    };
 });
 
 // Пример обработки события завершения ввода (Ctrl+C)
@@ -311,6 +356,7 @@ bot.on('physicsTick', async () => {
 
 bot.on('chat', (username, message) => {
     if (username === bot.username) return
+
     switch (true) {
         case /^invsee \w+( \d)?$/.test(message): {
             const command = message.split(' ')
@@ -318,9 +364,7 @@ bot.on('chat', (username, message) => {
             break
         }
     }
-    if (username === "SmellOfBebra" && message === "ur level") {
-        bot.chat(`I am level ${bot.experience.level}`)
-    }
+
     if (username === 'SmellOfBebra') {
         const mcData = require('minecraft-data')(bot.version)
         const args = message.split(' ')
