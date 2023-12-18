@@ -1,7 +1,0 @@
-node_modules/
-test.js
-package-lock.json
-package.json
-.vscode/
-.gitignore
-start4me.bat
