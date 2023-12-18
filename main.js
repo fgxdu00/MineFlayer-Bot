@@ -17,102 +17,42 @@ const {
 const chalk = require('chalk')
 const repl = require('repl');
 const readline = require('readline');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const windows = require('prismarine-windows').windows;
-optimization: {
-    minimizer: [
-        new UglifyJSPlugin({
-            uglifyOptions: {
-                compress: {
-                    drop_console: true,
-                }
-            }
-        })
-    ]
-}
 const radarPlugin = require('mineflayer-radar')(mineflayer);
+const { autototem } = require('mineflayer-auto-totem')
 var options = {
     host: '0.0.0.0', // optional
     port: 3008, // optional
 }
 
-const {
-    autototem
-} = require('mineflayer-auto-totem')
-
-
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({
-    server
-});
-
 const argv = yargs
-  .option('username', {
-    alias: 'u',
-    describe: 'Bot username',
-    type: 'string',
-  })
-  .option('ip', {
-    alias: 'i',
-    describe: 'Server IP address',
-    type: 'string',
-  })
-  .option('port', {
-    alias: 'p',
-    describe: 'Server port',
-    type: 'number',
-  })
-  .option('owner', {
-    alias: 'o',
-    describe: 'Bot owner',
-    type: 'string',
-  })
-  .argv;
+    .option('username', {
+        alias: 'u',
+        describe: 'Bot username',
+        type: 'string',
+    })
+    .option('ip', {
+        alias: 'i',
+        describe: 'Server IP address',
+        type: 'string',
+    })
+    .option('port', {
+        alias: 'p',
+        describe: 'Server port',
+        type: 'number',
+    })
+    .option('owner', {
+        alias: 'o',
+        describe: 'Bot owner',
+        type: 'string',
+    })
+    .argv;
 
 const bot = mineflayer.createBot({
-  host: argv.ip || 'localhost',
-  port: argv.port || 25565,
-  username: argv.username || 'Bot',
+    host: argv.ip || 'localhost',
+    port: argv.port || 25565,
+    username: argv.username || 'Bot',
 });
-
-radarPlugin(bot, options);
-
-// Serve the HTML file
-app.use(express.static('public'));
-
-// WebSocket connection handling
-wss.on('connection', (ws) => {
-    // Forward bot messages to the client
-    bot.on('message', (message) => {
-        ws.send(JSON.stringify({
-            type: 'chat',
-            message: message.toAnsi()
-        }));
-    });
-
-    // Handle incoming messages from the client (if needed)
-    ws.on('message', (message) => {
-        // Handle client messages if necessary
-    });
-});
-
-// Start the server
-const PORT = process.env.PORT || 5500;
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
-
-// Handle bot events or commands here
-bot.on('login', () => {
-    console.log('Bot logged in');
-});
-
-
 
 bot.loadPlugin(autototem)
 bot.loadPlugin(pvp)
@@ -120,6 +60,7 @@ bot.loadPlugin(armorManager)
 bot.loadPlugin(pathfinder)
 bot.loadPlugin(autoeat)
 bot.loadPlugin(collectBlock)
+radarPlugin(bot, options);
 
 bot.once('spawn', () => {
     mineflayerViewer(bot, {
@@ -159,13 +100,10 @@ bot.once('spawn', function () {
     bot.on("windowOpen", window => {
         bot.clickWindow(20, 0, 0)
     })
-    // setTimeout(() => {
-    //   console.log(chalk.gray.underline('teleported to spawn automatically'))
-    //   bot.chat('/spawn')
-    // }, 10000);
     setTimeout(() => {
         console.log(chalk.gray.underline('sit'))
         bot.chat('/sit')
+        displayPlayerList()
     }, 10000);
 });
 
@@ -174,13 +112,6 @@ function displayPlayerList() {
     const playerList = Object.keys(bot.players).map((username) => bot.players[username].username);
     console.log('Список игроков:', playerList);
 }
-
-bot.on('login', () => {
-    setTimeout(() => {
-        console.log('Бот успешно запущен!');
-        displayPlayerList();
-    }, 3000)
-});
 
 bot.once('windowOpen', function (window) {
     // Check if it's the correct window and has an 'id' property
