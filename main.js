@@ -11,9 +11,7 @@ const armorManager = require('mineflayer-armor-manager')
 const autoeat = require('mineflayer-auto-eat').plugin
 const collectBlock = require('mineflayer-collectblock').plugin
 const mineflayerViewer = require('prismarine-viewer').mineflayer
-const {
-    GoalBlock
-} = require('mineflayer-pathfinder').goals
+const { GoalBlock } = require('mineflayer-pathfinder').goals
 const chalk = require('chalk')
 const repl = require('repl');
 const readline = require('readline');
@@ -75,7 +73,6 @@ const rl = readline.createInterface({
 });
 
 rl.on('line', (input) => {
-    // Пример: присвоить введенное значение переменной
     let userInput = input;
     if (userInput === "playerList") {
         displayPlayerList()
@@ -84,10 +81,10 @@ rl.on('line', (input) => {
     };
 });
 
-// Пример обработки события завершения ввода (Ctrl+C)
+
 rl.on('close', () => {
-    console.log('Процесс ввода завершен.');
-    bot.quit(); // Возможно, вы захотите добавить здесь более сложную логику завершения
+    console.log('Entry process is complete');
+    bot.quit();
 });
 
 bot.on('error', (error) => {
@@ -103,23 +100,21 @@ bot.once('spawn', function () {
     setTimeout(() => {
         console.log(chalk.gray.underline('sit'))
         bot.chat('/sit')
-        displayPlayerList()
+        displayPlayerList()        
     }, 10000);
 });
 
-// Функция для отображения списка игроков
 function displayPlayerList() {
     const playerList = Object.keys(bot.players).map((username) => bot.players[username].username);
-    console.log('Список игроков:', playerList);
+    console.log('Player List:', playerList);
 }
 
 bot.once('windowOpen', function (window) {
-    // Check if it's the correct window and has an 'id' property
     if (window && window.id) {
         console.log(window.containerItems());
         setTimeout(() => {
             bot.closeWindow(window);
-        }, 1000); // Adjust the timeout value as needed
+        }, 1000);
     } else {
         console.error('Invalid or unexpected window:', window);
     }
@@ -146,7 +141,7 @@ function useInvsee(username, showEquipment, message) {
         }
     })
     if (message === `invsee ${bot.username}`) {
-        console.log('не понятно крч чо там')
+        console.log("I don't understand what's in there.")
     } else {
         if (showEquipment) {
             bot.chat(`/invsee ${username} 1`)
@@ -283,15 +278,12 @@ bot.on('physicsTick', () => {
     if (bot.pathfinder.isMoving()) return
 
     const entity = bot.nearestEntity()
-    // if (entity) bot.lookAt(entity.position.offset(0, entity.height, 0))
 })
 
 bot.on('physicsTick', () => {
     if (!guardPos) return
-
     const filter = e => e.type === 'mob' && e.position.distanceTo(bot.entity.position) < 16 &&
         e.mobType !== 'Armor Stand' // Mojang classifies armor stands as mobs for some reason?
-
     const entity = bot.nearestEntity(filter)
     if (entity) {
         bot.pvp.attack(entity)
@@ -304,7 +296,6 @@ bot.on('physicsTick', async () => {
 
 bot.on('chat', (username, message) => {
     if (username === bot.username) return
-
     switch (true) {
         case /^invsee \w+( \d)?$/.test(message): {
             const command = message.split(' ')
@@ -317,28 +308,20 @@ bot.on('chat', (username, message) => {
         const mcData = require('minecraft-data')(bot.version)
         const args = message.split(' ')
         if (args[0] == 'Collect') {
-
-            // Get the correct block type
             const blockType = mcData.blocksByName[args[1]]
             if (!blockType) {
                 bot.chat("I don't know such a block")
                 return
             }
-
-            // Try and find that block type in the world
             const block = bot.findBlock({
                 matching: blockType.id,
                 maxDistance: 64
             })
-
             if (!block) {
                 bot.chat("I don't see any around here")
                 return
             }
-
             bot.chat('Looting a short-range ' + blockType.name)
-
-            // Collect the block if we found one
             bot.collectBlock.collect(block, err => {
                 if (err) bot.chat(err.message)
             })
@@ -346,12 +329,10 @@ bot.on('chat', (username, message) => {
 
         if (message === 'Guard') {
             const player = bot.players[username]
-
             if (!player) {
                 bot.chat("Can't find you.")
                 return
             }
-
             bot.chat('Got you')
             guardArea(player.entity.position)
         }
@@ -360,7 +341,6 @@ bot.on('chat', (username, message) => {
             var replacement = "say ",
                 toReplace = "",
                 str = message
-
             str = str.replace(replacement, toReplace)
             bot.chat(str)
         }
@@ -368,15 +348,12 @@ bot.on('chat', (username, message) => {
             var replacement = "Follow ",
                 toReplace = "",
                 str = message
-
             str = str.replace(replacement, toReplace)
             const player = bot.players[str]
-
             if (!player) {
                 bot.chat("Can't find you")
                 return
             }
-
             const goal = new GoalFollow(player.entity, 1)
             bot.pathfinder.setGoal(goal, true)
         }
@@ -385,19 +362,15 @@ bot.on('chat', (username, message) => {
             var replacement = "Fight ",
                 toReplace = "",
                 str = message
-
             str = str.replace(replacement, toReplace)
             const player = bot.players[str]
-
             if (!player) {
                 bot.chat("Can't find him")
                 return
             }
-
             bot.chat('Roger that')
             bot.pvp.attack(player.entity)
         }
-
         if (message === 'stop') {
             bot.chat('ok')
             stopGuarding()
@@ -413,3 +386,51 @@ bot.on('chat', (username, message) => {
         }
     }
 })
+
+const net = require('net');
+
+const server = net.createServer((socket) => {
+    console.log('Client connected');
+    socket.setEncoding('utf-8');
+
+    socket.on('readable', () => {
+        let chunk;
+        while ((chunk = socket.read()) !== null) {
+            const messages = chunk.trim().split('\n');
+            for (const message of messages) {
+                if (message.trim() !== '') {
+                    bot.chat(`${message.trim()}`)
+                }
+            }
+        }
+    });
+
+    socket.on('end', () => {
+        console.log('Client disconnected');
+        process.exit();
+    });
+
+    socket.on('error', (err) => {
+        if (err.code === 'ENOTCONN') {
+            console.log('Client not connected');
+        } else {
+            console.error('Socket error:', err);
+            socket.destroy();
+        }
+    });
+});
+
+const PORT = 3010;
+
+server.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+    console.error('Server error:', err);
+    process.exit(1);
+});
+
+process.on('exit', () => {
+    server.close();
+});
