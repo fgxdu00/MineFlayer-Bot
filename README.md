@@ -56,7 +56,7 @@ On servers where player nicknames come after the name of the clan, prefix, separ
 
 
 
-# Russian translate
+# Russian translate | Русский перевод
 
 
 
