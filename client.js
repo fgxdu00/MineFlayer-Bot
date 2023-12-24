@@ -26,3 +26,27 @@ client.on('data', (data) => {
 client.on('close', () => {
     console.log(chalk.red('Connection closed'));
 });
+
+const server = net.createServer((socket) => {
+    console.log('Client connected');
+
+    socket.on('data', (data) => {
+        const command = data.toString().trim();
+        console.log(`Received command from Python: ${command}`);
+
+        // Execute the command (you may want to add security checks here)
+        const exec = require('child_process').exec;
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing command: ${error.message}`);
+                return;
+            }
+            console.log(`Command output:\n${stdout}`);
+        });
+    });
+});
+
+const PORT = 3015;
+server.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+});

@@ -38,6 +38,17 @@ For example:
 > set mainParams=--username MyBot --ip mc.hypixel.net --port 25565 --owner --owner PussyHunter666
 
 
+## **"Major" update**
+
+
+All chat, including message entry, is now in the UI, written in Python. I added a new startNew.bat startup file, but left the old startup option as well.
+
+Start main.js first, then gui.py (or client.js (old version)).
+Remember that to run gui.py you will need to install Python and dependencies for it too.
+
+No time to add a requirements.txt file (imported libraries change frequently). It will be implemented in future updates
+
+
 ## Shortcomings
 
 
@@ -86,6 +97,17 @@ Owner - это ник игрока, чьи команды будет слуша�
 Например:
 
 > set mainParams=--username MyBot --ip mc.hypixel.net --port 25565 --owner --owner PussyHunter666
+
+
+## **"Крупное" обновление**
+
+
+Теперь весь чат, включая ввод сообщений, находится в пользовательском интерфейсе, написанный на Python. Добавил новый файл запуска startNew.bat, но оставил и старый вариант запуска.
+Запускать сперва файл main.js, а потом gui.py (или client.js (старый вариант))
+
+Помните, что для запуска gui.py потребуется установить Python и зависимости и для него тоже.
+
+Файл requirements.txt добавлять времени нет (импортированные библиотеки часто меняются). Будет реализовано в будущих обновлениях
 
 
 ## Недостатки

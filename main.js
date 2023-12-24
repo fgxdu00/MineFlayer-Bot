@@ -76,6 +76,8 @@ rl.on('line', (input) => {
     let userInput = input;
     if (userInput === "playerList") {
         displayPlayerList()
+    } else if (userInput === "connect") {
+        connection();
     } else {
         bot.chat(userInput);
     };
@@ -91,22 +93,25 @@ bot.on('error', (error) => {
     console.error('Bot error:', error);
 });
 
-bot.once('spawn', function () {
+function connection() {
     bot.setQuickBarSlot(0);
     bot.activateItem(false);
     bot.on("windowOpen", window => {
         bot.clickWindow(20, 0, 0)
     })
     setTimeout(() => {
-        console.log(chalk.gray.underline('sit'))
-        bot.chat('/sit')
         displayPlayerList()        
     }, 10000);
+}
+
+bot.once('spawn', function () {
+    connection();
 });
 
 function displayPlayerList() {
     const playerList = Object.keys(bot.players).map((username) => bot.players[username].username);
-    console.log('Player List:', playerList);
+    const playerListString = playerList.join(' | ');
+    console.log('playerList: ' + playerListString);
 }
 
 bot.once('windowOpen', function (window) {
@@ -390,32 +395,32 @@ bot.on('chat', (username, message) => {
 const net = require('net');
 
 const server = net.createServer((socket) => {
-    console.log('Client connected');
     socket.setEncoding('utf-8');
 
-    socket.on('readable', () => {
+    socket.on('data', (data) => {
         let chunk;
         while ((chunk = socket.read()) !== null) {
             const messages = chunk.trim().split('\n');
             for (const message of messages) {
-                if (message.trim() !== '') {
-                    bot.chat(`${message.trim()}`)
+                if (message.trim() === 'playerList') {
+                    displayPlayerList();
+                } else if (message.trim() === 'connect') {
+                    connection();
+                } else if (message.trim() !== '') {
+                    bot.chat(`${message.trim()}`);
                 }
             }
         }
-    });
-
-    socket.on('end', () => {
-        console.log('Client disconnected');
-        process.exit();
-    });
-
-    socket.on('error', (err) => {
-        if (err.code === 'ENOTCONN') {
-            console.log('Client not connected');
-        } else {
-            console.error('Socket error:', err);
-            socket.destroy();
+        const stroka = data.toString().trim();
+        if (stroka === 'playerList') {
+            displayPlayerList()
+            const playerList = Object.keys(bot.players).map((username) => bot.players[username].username);
+            const playerListString = 'playerList: ' + playerList.join(' | ');
+            sendToPython(socket, playerListString)
+        } else if (stroka === 'connect') {
+            connection();
+        } else if (stroka !== '') {
+            bot.chat(`${stroka}`);
         }
     });
 });
@@ -426,11 +431,29 @@ server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
 });
 
-server.on('error', (err) => {
-    console.error('Server error:', err);
-    process.exit(1);
+function sendToPython(client, message) {
+    try {
+        client.write(`${message}\n`);
+    } catch (error) {
+        console.error('Error sending message to Python client:' + error)
+    }
+};
+
+const serverSocket = net.createServer((client) => {
+    client.setEncoding('utf-8');
+
+    console.log('Python client connected');
+    client.on('end', () => {
+        console.log('Python client disconnected');
+    });
+
+    bot.on('message', (message) => {
+        const formattedMessage = message.toString();
+        sendToPython(client, formattedMessage);
+    });
 });
 
-process.on('exit', () => {
-    server.close();
+
+serverSocket.listen(3011, () => {
+    console.log('Server socket listening on port 3011');
 });
