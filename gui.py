@@ -4,7 +4,6 @@ from PIL import Image
 import threading
 import json
 from tkinter import messagebox
-import multiprocessing
 
 class ChatApp:
     def __init__(self, root):
