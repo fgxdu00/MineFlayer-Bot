@@ -1,0 +1,27 @@
+{
+    "bot-setup": {
+        "username": "bot",
+        "owner": "pussyhunter3000"
+    },
+    "server": {
+        "ip": "localhost",
+        "port": 25565,
+        "version": "1.12.2"
+    },
+    
+    "utils": {
+        "anti-afk": {
+            "enabled": false,
+            "sneak": false,
+            "jump": false,
+            "rotate": false,
+            "hit": {
+                "enabled": false,
+                "delay": 1000,
+                "attack-mobs": false
+            }
+        },
+        "auto-reconnect": false,
+        "auto-reconnect-delay": 5000
+    }
+}

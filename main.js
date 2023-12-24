@@ -1,5 +1,8 @@
+// Import settings
+const config = require('./settings.json')
+
+//Import bot dependencies
 const mineflayer = require('mineflayer')
-const yargs = require('yargs');
 const pvp = require('mineflayer-pvp').plugin
 const {
     pathfinder,
@@ -11,45 +14,26 @@ const armorManager = require('mineflayer-armor-manager')
 const autoeat = require('mineflayer-auto-eat').plugin
 const collectBlock = require('mineflayer-collectblock').plugin
 const mineflayerViewer = require('prismarine-viewer').mineflayer
-const { GoalBlock } = require('mineflayer-pathfinder').goals
-const chalk = require('chalk')
-const repl = require('repl');
-const readline = require('readline');
-const windows = require('prismarine-windows').windows;
+const { GoalBlock, GoalXZ } = require('mineflayer-pathfinder').goals;
+const {
+    autototem
+} = require('mineflayer-auto-totem')
 const radarPlugin = require('mineflayer-radar')(mineflayer);
-const { autototem } = require('mineflayer-auto-totem')
 var options = {
-    host: '0.0.0.0', // optional
-    port: 3008, // optional
+    host: '0.0.0.0',
+    port: 3008,
 }
 
-const argv = yargs
-    .option('username', {
-        alias: 'u',
-        describe: 'Bot username',
-        type: 'string',
-    })
-    .option('ip', {
-        alias: 'i',
-        describe: 'Server IP address',
-        type: 'string',
-    })
-    .option('port', {
-        alias: 'p',
-        describe: 'Server port',
-        type: 'number',
-    })
-    .option('owner', {
-        alias: 'o',
-        describe: 'Bot owner',
-        type: 'string',
-    })
-    .argv;
+//Import terminal styling
+const chalk = require('chalk')
+const readline = require('readline');
 
+//Creating bot
 const bot = mineflayer.createBot({
-    host: argv.ip || 'localhost',
-    port: argv.port || 25565,
-    username: argv.username || 'Bot',
+    host: config.server.ip,
+    port: config.server.port,
+    username: config['bot-setup']['username'],
+    version: config.server.version,
 });
 
 bot.loadPlugin(autototem)
@@ -60,12 +44,88 @@ bot.loadPlugin(autoeat)
 bot.loadPlugin(collectBlock)
 radarPlugin(bot, options);
 
+const {
+    spawn
+} = require('child_process');
+
 bot.once('spawn', () => {
     mineflayerViewer(bot, {
         port: 3007,
         firstPerson: true
     })
-})
+    const pythonProcess = spawn('python', ['guiTest.py']);
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Exit code: ${code}`);
+    });
+
+    pythonProcess.on('error', (err) => {
+        console.error('Child process error: ', err);
+    });
+
+    process.on('exit', (code) => {
+        console.log(`Main process exit code: ${code}`);
+    });
+
+    if (config.utils['anti-afk'].enabled) {
+        if (config.utils['anti-afk'].sneak) {
+            bot.setControlState('sneak', true);
+        }
+
+        if (config.utils['anti-afk'].jump) {
+            bot.setControlState('jump', true);
+        }
+
+        if (config.utils['anti-afk']['hit'].enabled) {
+            let delay = config.utils['anti-afk']['hit']['delay'];
+            let attackMobs = config.utils['anti-afk']['hit']['attack-mobs']
+
+            setInterval(() => {
+                if (attackMobs) {
+                    let entity = bot.nearestEntity(e => e.type !== 'object' && e.type !== 'player' &&
+                        e.type !== 'global' && e.type !== 'orb' && e.type !== 'other');
+
+                    if (entity) {
+                        bot.attack(entity);
+                        return
+                    }
+                }
+
+                bot.swingArm("right", true);
+            }, delay);
+        }
+
+        if (config.utils['anti-afk'].rotate) {
+            setInterval(() => {
+                bot.look(bot.entity.yaw + 1, bot.entity.pitch, true);
+            }, 100);
+        }
+    }
+});
+
+function circleWalk(bot, radius) {
+    // Make bot walk in square with center in bot's  wthout stopping
+    return new Promise(() => {
+        const pos = bot.entity.position;
+        const x = pos.x;
+        const y = pos.y;
+        const z = pos.z;
+
+        const points = [
+            [x + radius, y, z],
+            [x, y, z + radius],
+            [x - radius, y, z],
+            [x, y, z - radius],
+        ];
+
+        let i = 0;
+        setInterval(() => {
+            if (i === points.length) i = 0;
+            bot.pathfinder.setGoal(new GoalXZ(points[i][0], points[i][2]));
+            i++;
+        }, 1000);
+    });
+}
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -100,7 +160,7 @@ function connection() {
         bot.clickWindow(20, 0, 0)
     })
     setTimeout(() => {
-        displayPlayerList()        
+        displayPlayerList()
     }, 10000);
 }
 
@@ -199,7 +259,7 @@ bot.once('spawn', () => {
     })
     bot.on('path_update', (r) => {
         const nodesPerTick = (r.visitedNodes * 50 / r.time).toFixed(2)
-        console.log(`I can get there in ${r.path.length} moves. Computation took ${r.time.toFixed(2)} ms (${nodesPerTick} nodes/tick). ${r.status}`)
+        // console.log(`I can get there in ${r.path.length} moves. Computation took ${r.time.toFixed(2)} ms (${nodesPerTick} nodes/tick). ${r.status}`)
         const path = [bot.entity.position.offset(0, 0.5, 0)]
         for (const node of r.path) {
             path.push({
@@ -309,7 +369,7 @@ bot.on('chat', (username, message) => {
         }
     }
 
-    if (username === `${(argv.owner)}`) {
+    if (username === `${config['bot-setup']['owner']}`) {
         const mcData = require('minecraft-data')(bot.version)
         const args = message.split(' ')
         if (args[0] == 'Collect') {
@@ -391,6 +451,14 @@ bot.on('chat', (username, message) => {
         }
     }
 })
+
+if (config.utils['auto-reconnect']) {
+    bot.on('end', () => {
+        setTimeout(() => {
+            createBot();
+        }, config.utils['auto-reconnect-delay']);
+    });
+}
 
 const net = require('net');
 
