@@ -53,7 +53,7 @@ bot.once('spawn', () => {
         port: 3007,
         firstPerson: true
     })
-    const pythonProcess = spawn('python', ['guiTest.py']);
+    const pythonProcess = spawn('python', ['gui.py']);
 
     pythonProcess.on('close', (code) => {
         console.log(`Exit code: ${code}`);
